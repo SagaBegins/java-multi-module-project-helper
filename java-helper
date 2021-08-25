@@ -1,9 +1,9 @@
 ########################################################################
 #Script Name		: java_helper
-#Args				: [-n|--no-info] [-v|--vpn] [-c|--chdir] [-p|--custom-ps1]                                           
+#Args			: [-n|--no-info] [-v|--vpn] [-c|--chdir] [-p|--custom-ps1]                                           
 #Description		: Helper file for java project with many sub projects
-#Author				: Vidya Sagar J 
-#GitHub				: @sagabegins
+#Author			: Vidya Sagar J 
+#GitHub			: @sagabegins
 ########################################################################
 
 # TODO Add functionality to use files(<project_name>.<go|py|js>project or .project with details of project name) which help with scanning other projects.
