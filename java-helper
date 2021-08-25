@@ -1,5 +1,5 @@
 ########################################################################
-#Script Name		: java_helper
+#Script Name		: java-helper
 #Args			: [-n|--no-info] [-v|--vpn] [-c|--chdir] [-p|--custom-ps1]                                           
 #Description		: Helper file for java project with many sub projects
 #Author			: Vidya Sagar J 
