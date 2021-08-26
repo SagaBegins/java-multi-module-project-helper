@@ -6,7 +6,7 @@ java-helper makes navigating between, building and running java subprojects easi
 
 ## Usage
 
-    source <path-to-helper>/java-helper [options]
+    source <path to helper> [options]
 
 Options supported by java-helper
 
