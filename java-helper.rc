@@ -1,5 +1,7 @@
+#!/bin/bash
+
 ########################################################################
-#Script Name		: java-helper
+#Script Name		: java-helper.rc
 #Args			: [-n|--no-info] [-v|--vpn] [-c|--chdir] [-p|--custom-ps1]                                           
 #Description		: Helper file for java project with many sub projects
 #Author			: Vidya Sagar J 
@@ -13,7 +15,7 @@
 # -c|--chdir	 	: Changes directory to Base of project.
 # -p|--custom-ps1	: Uses custom ps1
 
-# Add '. <path to java-helper> [options]' or 'source <path to helper> [options]'
+# Add '. <path to helper> [options]' or 'source <path to helper> [options]'
 # to .bashrc below the interactivity check. 
 # It is not recommended to use -c|--chdir option when putting it there, as it always will start at base directory.
 # If you want to use a custom ps1 place it below PS1 in bashrc
@@ -72,8 +74,8 @@ done
 # Appending previous history
 history -a
 
-# REMOVE THIS IF YOU WANT TO USE THIS TO USE DEFAULT PS1 WHEN RUNNING source command OR add '. <path to java_helper> [--no-info|n]'
-# or 'source <path to java_helper> [--no-info|n] [-v|--vpn]' to .bashrc below the interactivity check. If you want to use a custom ps1
+# REMOVE THIS IF YOU WANT TO USE THIS TO USE DEFAULT PS1 WHEN RUNNING source command OR add '. <path to helper> [--no-info|n]'
+# or 'source <path to helper> [--no-info|n] [-v|--vpn]' to .bashrc below the interactivity check. If you want to use a custom ps1
 # place it below PS1 in bashrc
 if  (( $custom_ps1 ))
 then
@@ -1039,7 +1041,7 @@ function edit_config {
 }
 
 #######################################
-# Opens java-helper in gedit.
+# Opens the helper script in gedit.
 # GLOBALS:
 #   NONE
 # ARGUMENTS:
@@ -1053,7 +1055,7 @@ function edit_helper {
 }
 
 #######################################
-# Reloads java-helper in a new tab and closes current tab.
+# Reloads the helper script in a new tab and closes current tab.
 # GLOBALS:
 #   NONE
 # ARGUMENTS:
