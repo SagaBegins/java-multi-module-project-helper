@@ -366,7 +366,7 @@ function show_jacoco {
 		case $1 in
 			-h|--help)
 				echo "Is used to launch jacoco test coverage index file of project. Use tab completion to see valid list of arguments."
-				echo "Usage: $0 ${BLUE}<project-name>${DEFAULT}"
+				echo "Usage: ${GREEN}${FUNCNAME[0]} ${BLUE}<project-name>${DEFAULT}"
 				return
 				;;
 			[0-9]*)
@@ -415,7 +415,7 @@ function show_checkstyle {
 	do
 		case $1 in
 			-h|--help)
-				echo "Usage: ${GREEN}show_checkstyle ${BLUE}[-h|--help] <project_name>${DEFAULT}"
+				echo "Usage: ${GREEN}${FUNCNAME[0]} ${BLUE}[-h|--help] <project_name>${DEFAULT}"
 				;;
 			*)
 				proj=$1
@@ -457,7 +457,7 @@ function btrun {
 	do
 		case $1 in
 			-h|--help)
-				echo "Usage: btrun ${BLUE}<project-name>${DEFAULT} ${GREEN}[--new-tab]${DEFAULT}."
+				echo "Usage: ${GREEN}${FUNCNAME[0]} ${BLUE}<project-name>${DEFAULT} ${GREEN}[--new-tab]${DEFAULT}."
 				echo "--new-tab runs the command in a new terminal tab"
 				return
 				;;
@@ -514,7 +514,7 @@ function gbld {
 	do
 		case $1 in
 			-h|--help)
-				echo "Usage: gbld ${BLUE}<project-name>${DEFAULT} ${GREEN}[--new-tab]${DEFAULT}."
+				echo "Usage: ${GREEN}${FUNCNAME[0]} ${BLUE}<project-name>${DEFAULT} ${GREEN}[--new-tab]${DEFAULT}."
 				echo "--new-tab runs the command in a new terminal tab"
 				return
 				;;
@@ -580,7 +580,7 @@ function bld {
 	do
 		case $1 in
 			-h|--help)
-				echo "Usage: bld ${BLUE}<project-name>${DEFAULT} ${GREEN}[--new-tab]${DEFAULT}."
+				echo "Usage: ${GREEN}${FUNCNAME[0]} ${BLUE}<project-name>${DEFAULT} ${GREEN}[--new-tab]${DEFAULT}."
 				echo "--new-tab runs the command in a new terminal tab"
 				return
 				;;
@@ -819,6 +819,7 @@ function test_projects {
 #######################################
 function push_to_gerrit {
 	# TODO Move the checking to a separate function.
+	# TODO Add help
 	local built status_check build_check message override_gerrit_visibility
 
 	override_gerrit_visibility=$gerrit_visibility
