@@ -9,6 +9,7 @@
 ########################################################################
 
 # TODO Add functionality to use files(<project_name>.<go|py|js>project or .project with details of project name) which help with scanning other projects.
+# TODO Rework build functions to support all tasks using project names.
 
 # -n|--no-info		: Does not print helper info.
 # -v|--vpn 			: Connects to openvpn server.
