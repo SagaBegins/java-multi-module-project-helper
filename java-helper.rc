@@ -1,20 +1,19 @@
 #!/bin/bash
-
 ########################################################################
-#Script Name		: java-helper.rc
-#Args			: [-n|--no-info] [-v|--vpn] [-c|--chdir] [-p|--custom-ps1]                                           
-#Description		: Helper file for java project with many sub projects
-#Author			: Vidya Sagar J 
-#GitHub			: @sagabegins
+#Script Name    : java-helper.rc
+#Args           : [-n|--no-info] [-v|--vpn] [-c|--chdir] [-p|--custom-ps1]                                           
+#Description    : Helper file for java project with many sub projects
+#Author         : Vidya Sagar J 
+#GitHub         : @sagabegins
 ########################################################################
 
 # TODO Add functionality to use files(<project_name>.<go|py|js>project or .project with details of project name) which help with scanning other projects.
 # TODO Rework build functions to support all tasks using project names.
 
-# -n|--no-info		: Does not print helper info.
-# -v|--vpn 			: Connects to openvpn server.
-# -c|--chdir	 	: Changes directory to Base of project.
-# -p|--custom-ps1	: Uses custom ps1
+# -n|--no-info      : Does not print helper info.
+# -v|--vpn          : Connects to openvpn server.
+# -c|--chdir        : Changes directory to Base of project.
+# -p|--custom-ps1   : Uses custom ps1
 
 # Add '. <path to helper> [options]' or 'source <path to helper> [options]'
 # to .bashrc below the interactivity check. 
@@ -52,20 +51,20 @@ while (( $# ))
 do
 	case $1 in
 		-n|--no-info)
-			info=0
-			;;
+				info=0
+				;;
 		-v|--vpn)
-			vpn=1
-			;;
+				vpn=1
+				;;
 		-c|--chdir)
-			chdir_to_base=1
-			;;
+				chdir_to_base=1
+				;;
 		-p|--custom-ps1)
-			custom_ps1=1
-			;;
+				custom_ps1=1
+				;;
 		*)
-			# Nothing
-			;;
+				# Ignore invalid options
+				;;
 	esac
 	shift
 done
@@ -89,13 +88,17 @@ fi
 BROWSER="google-chrome"
 
 #######################################
-# Prompts user to select values to vars.
+# Prompts user to assign values to vars and saves it in ~/.project_config.
 # GLOBALS:
-#   BASE_PROJECT_FOLDER VPN_CONFIG_FOLDER IAP_CONFIG
+#	BASE_PROJECT_FOLDER     : Base of the multi-project directory  
+#	BASE_PROJECT_NAME       : Name of the multi-project
+#	VPN_CONFIG_FOLDER       : Path to vpn configuration
+#	VPN_FILE_NAME           : Name of the VPN file
+#	JACOCO_PATH             : Path to Jacoco files
+#	CHECKSTYLE_PATH         : Path to checkstyle files
+#	PUSH_MESSAGE_VALIDATION : To validate if push message contains required pattern
 # ARGUMENTS:
-#   NONE
-# RETURN:
-#   0 if succeeds, non-zero on error.
+#	NONE
 #######################################
 function config_wizard {
 
@@ -103,20 +106,21 @@ function config_wizard {
 
 	# For getting env input on first run
 	# Add or remove variables to customize config wizard
-	vars=(BASE_PROJECT_FOLDER VPN_CONFIG_FOLDER BASE_PROJECT_NAME VPN_FILE_NAME JACOCO_PATH CHECKSTYLE_PATH)
+	vars=(BASE_PROJECT_FOLDER VPN_CONFIG_FOLDER BASE_PROJECT_NAME VPN_FILE_NAME JACOCO_PATH CHECKSTYLE_PATH PUSH_MESSAGE_VALIDATION)
 	BASE_PROJECT_FOLDER="$HOME/Desktop/project"
 	VPN_CONFIG_FOLDER="$HOME/.openvpn/Dev-VPN"
 	BASE_PROJECT_NAME="base"
 	VPN_FILE_NAME="vpn_file"
 	JACOCO_PATH="build/jacocoHtml/index.html"
 	CHECKSTYLE_PATH="build/reports/checkstyle/test.html"
+	PUSH_MESSAGE_VALIDATION="Task #[0-9]{5,}"
 
 	for var in "${vars[@]}"
 	do
-		read -p "Enter prefered $var (Default ${!var}): " value
+		read -ep "Enter prefered $var (Default ${!var}): " value
 		if [[ $value == '' ]]
 		then
-			value=${!var}
+				value=${!var}
 		fi
 
 		echo "export ${var}=${value}" >> $HOME/.project_config
@@ -143,11 +147,9 @@ fi
 #######################################
 # Exports valid project names obtained from settings.gradle.
 # GLOBALS:
-#   projects
+#	projects : Array with the names of all sub-projects
 # ARGUMENTS:
-#  full_path
-# RETURN:
-#   0 if succeeds, non-zero on error.
+#	NONE
 #######################################
 function export_project_names_from_settings {
 
@@ -186,29 +188,28 @@ function export_project_names_from_settings {
 #######################################
 # Extracts concise project name from full project name.
 # GLOBALS:
-#   projects
+#	projects            : Array with the names of all sub-projects
 # ARGUMENTS:
-#   full_path
-# RETURN:
-#   0 if succeeds, non-zero on error.
+#	full_project_name   : Full project name. Position [1].
 #######################################
 function extract_name_from_project {
 
-	local project_name similar_name ind
+	local project_name similar_name ind full_project_name
 	
-	project_name=$1
-	project_name=${project_name//\-/_}
+	# Extracting project name from full project name
+	full_project_name=$1
+	project_name=${full_project_name//\-/_}
 	split_name=(${project_name//:/ })
 	
 	project_name=${split_name[-1]}
 	ind=$((${#split_name[@]}-1))
 	
 	eval 'similar_names=(${!'"$project_name"'@})'
-		
+			
 	while [[ "${similar_names[*]}" =~ ^$project_name$ && $ind -gt -1 ]]
 	do
-		((--ind))
-		project_name="${split_name[ind]:+"${split_name[ind]}_"}$project_name"
+			((--ind))
+			project_name="${split_name[ind]:+"${split_name[ind]}_"}$project_name"
 	done
 	
 	# Add conditions if needed.
@@ -217,7 +218,7 @@ function extract_name_from_project {
 	# then
 	# 	# splitting at _
 	# 	project_name=(${project_name[@]/_/ })
-		
+			
 	# 	project_name="${project_name}_discovery_worker"
 	# fi
 	
@@ -227,11 +228,9 @@ function extract_name_from_project {
 #######################################
 # Obtains project names from path.
 # GLOBALS:
-#   projects
+#	projects    : Array with the names of all sub-projects
 # ARGUMENTS:
-#  full_path
-# RETURN:
-#   0 if succeeds, non-zero on error.
+#	full_path   : Full path to the project. Position [1]
 #######################################
 function extract_name {
 
@@ -275,11 +274,10 @@ function extract_name {
 #######################################
 # Finds sub projects and exports variables with the name.
 # GLOBALS:
-#   projects BASE_PROJECT_FOLDER
+#	projects            : Array with the names of all sub-projects
+#	BASE_PROJECT_FOLDER : Base of the multi-project directory  
 # ARGUMENTS:
-#   NONE
-# RETURN:
-#   0 if succeeds, non-zero on error.
+#	NONE
 #######################################
 function find_sub_project_folders {
 
@@ -304,7 +302,7 @@ function find_sub_project_folders {
 		name="$path"
 		
 		extract_name $name
-			
+				
 		# setting name to last appended name in project_names
 		name=${projects[-1]}
 		export ${name}=${path}
@@ -341,24 +339,25 @@ alias reconnect_vpn=reload_vpn
 complete -W "${projects[*]} -t --new-tab" bootrun btrun show_folder
 complete -W "${projects[*]} -t --new-tab -o --open-jacoco -n --no-jacoco" gbld gbuild bld build
 complete -W "-m --message -b --build -s --status" push_to_gerrit
-complete -W "${projects[*]}" show_jacoco
-complete -W "${projects[*]}" trigger_pubsub show_checkstyle pcd
+complete -W "${projects[*]}" trigger_pubsub show_checkstyle pcd show_jacoco
 complete -W "${go_projects[*]} ${projects[*]}" chdir
+#--------------------------------------------
 
 #######################################
-# Launches the browser with jacoco html.
+# Launches the browser with jacoco html of the specified project. If no project
+# current directory is used as the project. 
 # GLOBALS:
-#   REFERENCE OF project_name
+#	${!proj}        : Value stored in the variable with name proj  
 # ARGUMENTS:
-#   project_name [0-9] [-h|--help]
-# RETURN:
-#   0 if succeeds, non-zero on error.
+#	proj            : Name of the project. Position Any. Optional.
+#	open_browser    : Overrides open_jacoco set value. Position Any. Optional. Value: [0-9]* 
+#	[-h|--help]     : Prints the usage
 #######################################
 function show_jacoco {
 
 	local curr_dir proj tab_title open_browser
 
-	open_browser=1
+	open_browser=$open_jacoco
 	proj=''
 	curr_dir=$(pwd)
 
@@ -382,29 +381,29 @@ function show_jacoco {
 	
 	if (( open_browser ))
 	then
-		if [[ $proj == '' ]]
-		then
-			$BROWSER ${curr_dir}/${JACOCO_PATH} &> /dev/null & 
-			disown
-			echo ""
-		else
-			$BROWSER $BASE_PROJECT_FOLDER${!proj}/${JACOCO_PATH} &> /dev/null & 
-			disown
-			echo ""
-		fi
+			if [[ $proj == '' ]]
+			then
+					$BROWSER ${curr_dir}/${JACOCO_PATH} &> /dev/null & 
+					disown
+					echo ""
+			else
+					$BROWSER $BASE_PROJECT_FOLDER${!proj}/${JACOCO_PATH} &> /dev/null & 
+					disown
+					echo ""
+			fi
 	fi
 
 	cd $curr_dir
 }
 
+# TODO: Add option to open checkstyle main html
 #######################################
 # Launches the browser with checkstyle test html.
 # GLOBALS:
-#   REFERENCE OF project_name
+#	${!proj}        : Value stored in the variable with name proj  
 # ARGUMENTS:
-#   project_name [-h|--help]
-# RETURN:
-#   0 if succeeds, non-zero on error.
+#	proj            : Name of the project. Position Any. Optional.
+#	[-h|--help]     : Prints the usage
 #######################################
 function show_checkstyle {
 	
@@ -438,13 +437,15 @@ function show_checkstyle {
 }
 
 #######################################
-# Runs a given project with bootrun.
+# Changes directory to the specified project and executes the BOOT_RUN_COMMAND command. 
+# If no project name is provided, runs the command in the current directory.
 # GLOBALS:
-#   REFERENCE OF project_name BOOT_RUN_COMMAND
+#	${!proj}         : Value stored in the variable with name proj
+#	BOOT_RUN_COMMAND : Variable storing the bootRun command for the project 
 # ARGUMENTS:
-#   project_name [-h|--help] [-t|--new-tab] [-o|--open-jacoco] [-n|--no-jacoco]
-# RETURN:
-#   0 if succeeds, non-zero on error.
+#	proj             : Name of the project. Position Any. Optional.
+#	[-h|--help]      : Prints the usage.
+#	[-t|--new-tab]   : Bootruns the given project in a new terminal tab.
 #######################################
 function btrun {
 
@@ -494,13 +495,18 @@ function btrun {
 }
 
 #######################################
-# Builds a project with clean g build.
+# Changes directory to the specified project and executes the BUILD_COMMAND. 
+# If no project name is provided, runs the command in the current directory.
 # GLOBALS:
-#   REFERENCE OF project_name BUILD_COMMAND
+#	${!proj}           : Value stored in the variable with name proj
+#	BUILD_COMMAND      : Variable storing the command with tasks clean g build command for the project 
 # ARGUMENTS:
-#   project_name [-h|--help] [-t|--new-tab] [-o|--open-jacoco] [-n|--no-jacoco]
-# RETURN:
-#   0 if succeeds, non-zero on error.
+#   proj               : Name of the project. Position Any. Optional.
+#	open_browser       : Overrides open_jacoco set value. Position Any. Optional. Value: [0-9]*
+#	[-h|--help]        : Prints the usage.
+#	[-t|--new-tab]     : Bootruns the given project in a new terminal tab.
+#	[-o|--open-jacoco] : Overrides open_jacoco set value. Opens jacoco html after successfully building.
+#	[-n|--no-jacoco]   : Overrides open_jacoco set value. Does not open jacoco html.
 #######################################
 function gbld {
 
@@ -540,33 +546,39 @@ function gbld {
 
 	if (( new_tab ))
 	then
-		if [[ $proj == '' ]]
-		then
-			tab_title=$curr_dir
-		else
-			tab_title=$proj
-		fi
-		gnome-terminal --tab --title="$tab_title" -- /bin/bash -c ". $HELPER_SOURCE --no-info && gbld $proj $override_open_jacoco && read -p '${GREEN}Press Enter or ctrl-c to exit. Closes all related child windows too.'"
+			if [[ $proj == '' ]]
+			then
+					tab_title=$curr_dir
+			else
+					tab_title=$proj
+			fi
+			gnome-terminal --tab --title="$tab_title" -- /bin/bash -c ". $HELPER_SOURCE --no-info && gbld $proj $override_open_jacoco && read -p '${GREEN}Press Enter or ctrl-c to exit. Closes all related child windows too.'"
 	else
-		if [[ "$proj" != '' ]]
-		then
-			cd "$BASE_PROJECT_FOLDER${!proj}"
-		fi
+			if [[ "$proj" != '' ]]
+			then
+					cd "$BASE_PROJECT_FOLDER${!proj}"
+			fi
 
-		${BUILD_COMMAND} && show_jacoco $proj $override_open_jacoco
+			${BUILD_COMMAND} && show_jacoco $proj $override_open_jacoco
 	fi
 
 	cd $curr_dir
 }
 
 #######################################
-# Builds a project with clean build.
+# Changes directory to the specified project and builds it with tasks clean build. 
+# If no project name is provided, runs the command in the current directory.
 # GLOBALS:
-#   REFERENCE OF project_name PROJECT_GRADLEW
+# 	${!proj}           : Value stored in the variable with name proj
+#	PROJECT_GRADLEW    : Variable storing the wrapper of the base project 
 # ARGUMENTS:
-#   project_name [-h|--help] [-t|--new-tab] [-o|--open-jacoco] [-n|--no-jacoco]
-# RETURN:
-#   0 if succeeds, non-zero on error.
+#	proj               : Name of the project. Position Any. Optional.
+#	open_browser       : Overrides open_jacoco set value. Position Any. Optional. Value: [0-9]*
+#	[-h|--help]        : Prints the usage.
+#	[-t|--new-tab]     : Bootruns the given project in a new terminal tab.
+#	[-o|--open-jacoco] : Overrides open_jacoco set value. Opens jacoco html after successfully building.
+#	[-n|--no-jacoco]   : Overrides open_jacoco set value. Does not open jacoco html.
+# Builds a project with clean build.
 #######################################
 function bld {
 
@@ -606,33 +618,33 @@ function bld {
 
 	if (( new_tab ))
 	then
-		if [[ $proj == '' ]]
-		then
-			tab_title=$curr_dir
-		else
-			tab_title=$proj
-		fi
-		gnome-terminal --tab --title="$tab_title" -- /bin/bash -c ". $HELPER_SOURCE --no-info && bld $proj $override_open_jacoco && read -p '${GREEN}Press Enter or ctrl-c to exit.'"
+			if [[ $proj == '' ]]
+			then
+					tab_title=$curr_dir
+			else
+					tab_title=$proj
+			fi
+			gnome-terminal --tab --title="$tab_title" -- /bin/bash -c ". $HELPER_SOURCE --no-info && bld $proj $override_open_jacoco && read -p '${GREEN}Press Enter or ctrl-c to exit.'"
 	else
-		if [[ "$proj" != '' ]]
-		then
-			cd "$BASE_PROJECT_FOLDER${!proj}"
-		fi
+			if [[ "$proj" != '' ]]
+			then
+					cd "$BASE_PROJECT_FOLDER${!proj}"
+			fi
 
-		$PROJECT_GRADLEW clean build && show_jacoco $proj $override_open_jacoco
+			$PROJECT_GRADLEW clean build && show_jacoco $proj $override_open_jacoco
 	fi
 
 	cd $curr_dir
 }
 
 #######################################
-# Changes directory to the specified project name.
+# Changes directory to the specified project name. 
+# If no value is provided changes directory to BASE_PROJECT_FOLDER.
 # GLOBALS:
-#   REFERENCE OF project_name BASE_PROJECT_FOLDER
+#	${!1}                : Value stored in the variable with name proj
+#	$BASE_PROJECT_FOLDER : Variable storing the path to the multi-module-project
 # ARGUMENTS:
-#   project_name
-# RETURN:
-#   0 if succeeds, non-zero on error.
+#   $1                   : Name of the project. Position 1. Optional.
 #######################################
 function chdir {
 
@@ -651,11 +663,9 @@ function chdir {
 #######################################
 # Writes some info about the commands present.
 # GLOBALS:
-#   NONE
+#	NONE
 # ARGUMENTS:
-#   NONE
-# RETURN:
-#   0 if succeeds, non-zero on error.
+#	NONE
 #######################################
 function helper_info {
 
@@ -685,18 +695,16 @@ function helper_info {
 #######################################
 # Prints the status of gerrit_visibility.
 # GLOBALS:
-#   NONE
+#	NONE
 # ARGUMENTS:
-#   NONE
-# RETURN:
-#   0 if succeeds, non-zero on error.
+#	NONE
 #######################################
 function gerrit_branch_visibility {
 	if [[ $gerrit_visibility -eq 0 ]]
 	then
-		echo "  * Your commits are public. Change it to 1 to make it private."
+		echo "  * Your commits are private. Change it to 1 to make it public."
 	else
-		echo "  * Your commits are private. Change it to 0 to make it public."
+		echo "  * Your commits are public. Change it to 0 to make it private."
 	fi
 
 	echo "  * ${GREEN}toggle_gerrit_visibility${DEFAULT} can be used to toggle ${BLUE}Gerrit visibilty's${DEFAULT} state"
@@ -705,11 +713,9 @@ function gerrit_branch_visibility {
 #######################################
 # Prints the status of open_jacoco.
 # GLOBALS:
-#   NONE
+#	NONE
 # ARGUMENTS:
-#   NONE
-# RETURN:
-#   0 if succeeds, non-zero on error.
+#	NONE
 #######################################
 function open_jacoco_status {
 	if [[ $open_jacoco -eq 0 ]]
@@ -725,11 +731,9 @@ function open_jacoco_status {
 #######################################
 # Toggles the gerrit_visibility variable.
 # GLOBALS:
-#   NONE
+#	NONE
 # ARGUMENTS:
-#   NONE
-# RETURN:
-#   0 if succeeds, non-zero on error.
+#	NONE
 #######################################
 function toggle_gerrit_visibility {
 	if [[ ! ($gerrit_visibility -eq 0) ]]
@@ -745,11 +749,9 @@ function toggle_gerrit_visibility {
 #######################################
 # Toggles the open jacoco variable.
 # GLOBALS:
-#   NONE
+#	NONE
 # ARGUMENTS:
-#   NONE
-# RETURN:
-#   0 if succeeds, non-zero on error.
+#	NONE
 #######################################
 function toggle_open_jacoco {
 	if [[ ! ($open_jacoco -eq 0) ]]
@@ -765,11 +767,10 @@ function toggle_open_jacoco {
 #######################################
 # Tests if the changes build succesfully.
 # GLOBALS:
-#   BASE_PROJECT_FOLDER projects
+#	projects             : Array with the names of all sub-projects
+#	BASE_PROJECT_FOLDER  : Variable storing the path to the multi-module-project
 # ARGUMENTS:
-#   NONE
-# RETURN:
-#   0 if succeeds, 1 on error.
+#	NONE
 #######################################
 function test_projects {
 
@@ -812,11 +813,13 @@ function test_projects {
 #######################################
 # Commits all changes and pushes to gerrit. Builds all the projects with changes and checks for failure.
 # GLOBALS:
-#   BASE_PROJECT_FOLDER projects
+#	projects             : Array with the names of all sub-projects
+#	BASE_PROJECT_FOLDER  : Variable storing the path to the multi-module-project
 # ARGUMENTS:
-#   [-b|--build] [-s|--status] ([-m|--message] <message>) [-p|--private]
-# RETURN:
-#   0 if succeeds, 1 on error.
+#	[-b|--build]             : Builds the project and pushes to gerrit if build is successful.
+#	[-s|--status]            : Checks if there are any changes that need to be commited and pushed.
+#	[-m|--message] <message> : Pushes with commit message `message`.
+#	[-p|--private]           : Overrides gerrit_visibility. Will make the branch private.
 #######################################
 function push_to_gerrit {
 	# TODO Move the checking to a separate function.
@@ -831,6 +834,15 @@ function push_to_gerrit {
 	while (( $# ))
 	do
 		case $1 in
+			-h|--help)
+				echo "	Usage: ${GREEN}${FUNCNAME[0]} ${BLUE}[options]${DEFAULT}."
+				echo "	Options:"
+				echo "		[-b|--build]             : Builds the project and pushes to gerrit if build is successful."
+				echo "		[-s|--status]            : Checks if there are any changes that need to be commited and pushed."
+				echo "		[-m|--message] <message> : Pushes with commit message `message`."
+				echo "		[-p|--private]           : Overrides gerrit_visibility. Will make the branch private."
+				return
+				;;
 			-b|--build)
 				build_check=1
 				;;
@@ -898,7 +910,7 @@ function push_to_gerrit {
 		echo "Build check successful."
 	fi
 	
-	if [[ $message != '' && ! ($message =~ "Task #[0-9]{5,}") ]]
+	if [[ $message != '' && ! ($message =~ $PUSH_MESSAGE_VALIDATION) ]]
 	then 
 		echo "Please add task number to the commit msg."
 		return 1
@@ -925,11 +937,9 @@ function push_to_gerrit {
 #######################################
 # Disconnects the vpn by killing it.
 # GLOBALS:
-#   NONE
+#	NONE
 # ARGUMENTS:
-#   NONE
-# RETURN:
-#   0 if succeeds, 1 on error.
+#	NONE
 #######################################
 function disconnect_vpn {
 	pgrep -f openvpn | sudo xargs kill > /dev/null 2>&1
@@ -942,8 +952,6 @@ function disconnect_vpn {
 #   VPN_CONFIG_FOLDER
 # ARGUMENTS:
 #   NONE
-# RETURN:
-#   0 if succeeds, 1 on error.
 #######################################
 function connect_vpn {
 
@@ -951,8 +959,8 @@ function connect_vpn {
 
 	if [[ $VPN_CONFIG_FOLDER == '' ]]
 	then
-		echo 'Please add variable VPN_CONFIG_FOLDER to .project_config. You can open .project_config ${GREEN}edit_config${DEFAULT}'
-		return 1
+			echo 'Please add variable VPN_CONFIG_FOLDER to .project_config. You can open .project_config ${GREEN}edit_config${DEFAULT}'
+			return 1
 	fi
 
 	if [[ `pgrep -fa $VPN_CONFIG_FOLDER | wc -l` -lt 2 ]]
@@ -983,7 +991,7 @@ function connect_vpn {
 		echo ""
 	else
 		if (( info )); then
-			echo 'VPN already running'
+				echo 'VPN already running'
 		fi
 	fi
 }
@@ -991,11 +999,9 @@ function connect_vpn {
 #######################################
 # Disconnects and reconnects to the openvpn server.
 # GLOBALS:
-#   NONE
+#	NONE
 # ARGUMENTS:
-#   NONE
-# RETURN:
-#   0 if succeeds, 1 on error.
+#	NONE
 #######################################
 function reload_vpn {
 	disconnect_vpn
@@ -1005,11 +1011,9 @@ function reload_vpn {
 #######################################
 # Opens .project_config in gedit.
 # GLOBALS:
-#   NONE
+#	NONE
 # ARGUMENTS:
-#   NONE
-# RETURN:
-#   0 if succeeds, 1 on error.
+#	NONE
 #######################################
 function edit_config {
 	gedit $HOME/.project_config
@@ -1018,11 +1022,9 @@ function edit_config {
 #######################################
 # Reloads the config to refresh the variables.
 # GLOBALS:
-#   NONE
+#	NONE
 # ARGUMENTS:
-#   NONE
-# RETURN:
-#   0 if succeeds, 1 on error.
+#	NONE
 #######################################
 function reload_config {
 	source $HOME/.project_config
@@ -1031,11 +1033,9 @@ function reload_config {
 #######################################
 # Opens .project_config in gedit.
 # GLOBALS:
-#   NONE
+#	NONE
 # ARGUMENTS:
-#   NONE
-# RETURN:
-#   0 if succeeds, 1 on error.
+#	NONE
 #######################################
 function edit_config {
 	gedit $HOME/.project_config
@@ -1045,11 +1045,9 @@ function edit_config {
 #######################################
 # Opens the helper script in gedit.
 # GLOBALS:
-#   NONE
+#	NONE
 # ARGUMENTS:
-#   NONE
-# RETURN:
-#   0 if succeeds, 1 on error.
+#	NONE
 #######################################
 function edit_helper {
 	gedit $HELPER_SOURCE
@@ -1059,11 +1057,9 @@ function edit_helper {
 #######################################
 # Reloads the helper script in a new tab and closes current tab.
 # GLOBALS:
-#   NONE
+#	NONE
 # ARGUMENTS:
-#   NONE
-# RETURN:
-#   0 if succeeds, 1 on error.
+#	NONE
 #######################################
 function reload_helper {
 	gnome-terminal --tab
@@ -1073,11 +1069,9 @@ function reload_helper {
 #######################################
 # Prints the folder path from base project.
 # GLOBALS:
-#   REFERENCE to the project_name value
+#	${!proj}        : Value stored in the variable with name proj  
 # ARGUMENTS:
-#   project_name
-# RETURN:
-#   0 if succeeds, 1 on error.
+#	proj            : Name of the project. Position Any. Optional.
 #######################################
 function show_folder {
 	echo ${!1}
@@ -1086,11 +1080,9 @@ function show_folder {
 #######################################
 # Clears the screen and prints helper info.
 # GLOBALS:
-#   NONE
+#	NONE
 # ARGUMENTS:
-#   NONE
-# RETURN:
-#   0 if succeeds, 1 on error.
+#	NONE
 #######################################
 function clear_with_info {
 	clear
