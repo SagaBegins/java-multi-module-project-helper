@@ -147,7 +147,7 @@ fi
 #######################################
 # Exports valid project names obtained from settings.gradle.
 # GLOBALS:
-#	projects : Array with the names of all sub-projects
+#	projects : Associative array with the names and path of all sub-projects
 # ARGUMENTS:
 #	NONE
 #######################################
@@ -161,8 +161,7 @@ function export_project_names_from_settings {
 	IFS=$prev_ifs
 	i=0
 	
-	projects+=($BASE_PROJECT_NAME)
-	export $BASE_PROJECT_NAME=''
+	projects[$BASE_PROJECT_NAME]=''
 	
 	for project_name in "${project_names[@]}"
 	do
@@ -180,7 +179,7 @@ function export_project_names_from_settings {
 		if [[ -f "$BASE_PROJECT_FOLDER/$project_path/build.gradle" ]] 
 		then
 			extract_name_from_project $project_name		
-			export ${projects[-1]}=$project_path
+			projects[$PROJECT_NAME]=$project_path
 		fi
 	done
 }
@@ -188,53 +187,58 @@ function export_project_names_from_settings {
 #######################################
 # Extracts concise project name from full project name.
 # GLOBALS:
-#	projects            : Array with the names of all sub-projects
+#	projects            : Associative array with the names and path of all sub-projects
 # ARGUMENTS:
 #	full_project_name   : Full project name. Position [1].
+# RETURN:
+#	EXTRACTED_NAME      : Extracted project name is stored in this variable
 #######################################
 function extract_name_from_project {
 
-	local project_name similar_name ind full_project_name
+	local project_name ind full_project_name name
 	
 	# Extracting project name from full project name
 	full_project_name=$1
-	project_name=${full_project_name//\-/_}
-	split_name=(${project_name//:/ })
+	name=${full_project_name//\-/_}
+	split_name=(${name//:/ })
 	
-	project_name=${split_name[-1]}
+	name=${split_name[-1]}
 	ind=$((${#split_name[@]}-1))
 	
-	eval 'similar_names=(${!'"$project_name"'@})'
-			
-	while [[ "${similar_names[*]}" =~ ^$project_name$ && $ind -gt -1 ]]
+	for project_name in "${!projects[@]}"
 	do
-			((--ind))
-			project_name="${split_name[ind]:+"${split_name[ind]}_"}$project_name"
+		while [[ $name =~ ^$name$ && $ind -gt -1 ]]
+		do
+				((--ind))
+				name="${split_name[ind]:+"${split_name[ind]}_"}$name"
+		done
 	done
-	
+
 	# Add conditions if needed.
 	# Example
-	# if [[ "$project_name" == 'some_worker' || "$project_name" == 'other_worker' ]]
+	# if [[ "$name" == 'some_worker' || "$name" == 'other_worker' ]]
 	# then
 	# 	# splitting at _
-	# 	project_name=(${project_name[@]/_/ })
+	# 	name=(${name[@]/_/ })
 			
-	# 	project_name="${project_name}_discovery_worker"
+	# 	name="${name}_discovery_worker"
 	# fi
 	
-	projects+=($project_name)
+	$EXTRACTED_NAME=$name
 }
 
 #######################################
 # Obtains project names from path.
 # GLOBALS:
-#	projects    : Array with the names of all sub-projects
+#	projects       : Associative array with the names and path of all sub-projects
 # ARGUMENTS:
-#	full_path   : Full path to the project. Position [1]
+#	full_path      : Full path to the project. Position [1]
+# RETURN:
+#	EXTRACTED_NAME : Extracted project name is stored in this variable
 #######################################
 function extract_name {
 
-	local full_path name
+	local full_path name project_name
 
 	# # Add conditionals like this if necessary
 	# if [[ "$1" == '' ]]
@@ -259,22 +263,22 @@ function extract_name {
 	len=${#full_path[@]}
 	ind=$((len-1))
 
-	# Checking if the name was previously declared
-	eval 'similar_names=(${!'"$name"'@})'
-	
-	while [[ "${similar_names[@]}" =~ ^$name$ && $ind -gt -1 ]]
+	for project_name in "${!projects[@]}"
 	do
-		((--ind))
-		name="${full_path[ind]:+"${full_path[ind]}_"}$name"
+		while [[ ${project_name} =~ ^$name$ && $ind -gt -1 ]]
+		do
+			((--ind))
+			name="${full_path[ind]:+"${full_path[ind]}_"}$name"
+		done
 	done
 
-	projects+=($name)
+	$EXTRACTED_NAME=$name
 }
 
 #######################################
 # Finds sub projects and exports variables with the name.
 # GLOBALS:
-#	projects            : Array with the names of all sub-projects
+#	projects            : Associative array with the names and path of all sub-projects
 #	BASE_PROJECT_FOLDER : Base of the multi-project directory  
 # ARGUMENTS:
 #	NONE
@@ -282,11 +286,6 @@ function extract_name {
 function find_sub_project_folders {
 
 	local ind folder
-
-	for project in "${projects[@]}"
-	do
-		unset $project
-	done
 
 	unset projects
 
@@ -302,10 +301,7 @@ function find_sub_project_folders {
 		name="$path"
 		
 		extract_name $name
-				
-		# setting name to last appended name in project_names
-		name=${projects[-1]}
-		export ${name}=${path}
+		projects[$EXTRACTED_NAME]=$path
 
 	done < <(find $BASE_PROJECT_FOLDER -iname build.gradle)
 
@@ -336,18 +332,18 @@ alias reconnect_vpn=reload_vpn
 
 # TODO: Create functions for tab completion
 # Adding tab completion
-complete -W "${projects[*]} -t --new-tab" bootrun btrun show_folder
-complete -W "${projects[*]} -t --new-tab -o --open-jacoco -n --no-jacoco" gbld gbuild bld build
+complete -W "${!projects[*]} -t --new-tab" bootrun btrun show_folder
+complete -W "${!projects[*]} -t --new-tab -o --open-jacoco -n --no-jacoco" gbld gbuild bld build
 complete -W "-m --message -b --build -s --status" push_to_gerrit
-complete -W "${projects[*]}" trigger_pubsub show_checkstyle pcd show_jacoco
-complete -W "${go_projects[*]} ${projects[*]}" chdir
+complete -W "${!projects[*]}" trigger_pubsub show_checkstyle pcd show_jacoco
+complete -W "${go_projects[*]} ${!projects[*]}" chdir
 #--------------------------------------------
 
 #######################################
 # Launches the browser with jacoco html of the specified project. If no project
 # current directory is used as the project. 
 # GLOBALS:
-#	${!proj}        : Value stored in the variable with name proj  
+#	projects        : Associative array with the names and path of all sub-projects 
 # ARGUMENTS:
 #	proj            : Name of the project. Position Any. Optional.
 #	open_browser    : Overrides open_jacoco set value. Position Any. Optional. Value: [0-9]* 
@@ -387,7 +383,7 @@ function show_jacoco {
 					disown
 					echo ""
 			else
-					$BROWSER $BASE_PROJECT_FOLDER${!proj}/${JACOCO_PATH} &> /dev/null & 
+					$BROWSER $BASE_PROJECT_FOLDER${projects[$proj]}/${JACOCO_PATH} &> /dev/null & 
 					disown
 					echo ""
 			fi
@@ -400,7 +396,7 @@ function show_jacoco {
 #######################################
 # Launches the browser with checkstyle test html.
 # GLOBALS:
-#	${!proj}        : Value stored in the variable with name proj  
+#	projects        : Associative array with the names and path of all sub-projects 
 # ARGUMENTS:
 #	proj            : Name of the project. Position Any. Optional.
 #	[-h|--help]     : Prints the usage
@@ -430,7 +426,7 @@ function show_checkstyle {
 		disown
 		echo ""
 	else
-		$BROWSER $BASE_PROJECT_FOLDER${!proj}/${CHECKSTYLE_PATH} &> /dev/null & 
+		$BROWSER $BASE_PROJECT_FOLDER${projects[$proj]}/${CHECKSTYLE_PATH} &> /dev/null & 
 		disown
 		echo ""
 	fi
@@ -440,7 +436,7 @@ function show_checkstyle {
 # Changes directory to the specified project and executes the BOOT_RUN_COMMAND command. 
 # If no project name is provided, runs the command in the current directory.
 # GLOBALS:
-#	${!proj}         : Value stored in the variable with name proj
+#	projects         : Associative array with the names and path of all sub-projects
 #	BOOT_RUN_COMMAND : Variable storing the bootRun command for the project 
 # ARGUMENTS:
 #	proj             : Name of the project. Position Any. Optional.
@@ -485,7 +481,7 @@ function btrun {
 	else
 		if [[ "$proj" != '' ]]
 		then
-			cd "$BASE_PROJECT_FOLDER${!proj}"
+			cd "$BASE_PROJECT_FOLDER${projects[$proj]}"
 		fi
 
 		$BOOT_RUN_COMMAND
@@ -498,7 +494,7 @@ function btrun {
 # Changes directory to the specified project and executes the BUILD_COMMAND. 
 # If no project name is provided, runs the command in the current directory.
 # GLOBALS:
-#	${!proj}           : Value stored in the variable with name proj
+#	projects           : Associative array with the names and path of all sub-projects
 #	BUILD_COMMAND      : Variable storing the command with tasks clean g build command for the project 
 # ARGUMENTS:
 #   proj               : Name of the project. Position Any. Optional.
@@ -556,7 +552,7 @@ function gbld {
 	else
 			if [[ "$proj" != '' ]]
 			then
-					cd "$BASE_PROJECT_FOLDER${!proj}"
+					cd "$BASE_PROJECT_FOLDER${projects[$proj]}"
 			fi
 
 			${BUILD_COMMAND} && show_jacoco $proj $override_open_jacoco
@@ -569,7 +565,7 @@ function gbld {
 # Changes directory to the specified project and builds it with tasks clean build. 
 # If no project name is provided, runs the command in the current directory.
 # GLOBALS:
-# 	${!proj}           : Value stored in the variable with name proj
+#	projects           : Associative array with the names and path of all sub-projects
 #	PROJECT_GRADLEW    : Variable storing the wrapper of the base project 
 # ARGUMENTS:
 #	proj               : Name of the project. Position Any. Optional.
@@ -578,7 +574,6 @@ function gbld {
 #	[-t|--new-tab]     : Bootruns the given project in a new terminal tab.
 #	[-o|--open-jacoco] : Overrides open_jacoco set value. Opens jacoco html after successfully building.
 #	[-n|--no-jacoco]   : Overrides open_jacoco set value. Does not open jacoco html.
-# Builds a project with clean build.
 #######################################
 function bld {
 
@@ -628,7 +623,7 @@ function bld {
 	else
 			if [[ "$proj" != '' ]]
 			then
-					cd "$BASE_PROJECT_FOLDER${!proj}"
+					cd "$BASE_PROJECT_FOLDER${projects[$proj]}"
 			fi
 
 			$PROJECT_GRADLEW clean build && show_jacoco $proj $override_open_jacoco
@@ -641,7 +636,7 @@ function bld {
 # Changes directory to the specified project name. 
 # If no value is provided changes directory to BASE_PROJECT_FOLDER.
 # GLOBALS:
-#	${!1}                : Value stored in the variable with name proj
+#	projects             : Associative array with the names and path of all sub-projects
 #	$BASE_PROJECT_FOLDER : Variable storing the path to the multi-module-project
 # ARGUMENTS:
 #   $1                   : Name of the project. Position 1. Optional.
@@ -656,7 +651,7 @@ function chdir {
 	then
 		cd $BASE_PROJECT_FOLDER
 	else
-		cd "$BASE_PROJECT_FOLDER${!1}"
+		cd "$BASE_PROJECT_FOLDER${projects[$1]}"
 	fi
 }
 
@@ -767,7 +762,7 @@ function toggle_open_jacoco {
 #######################################
 # Tests if the changes build succesfully.
 # GLOBALS:
-#	projects             : Array with the names of all sub-projects
+#	projects             : Associative array with the names and path of all sub-projects
 #	BASE_PROJECT_FOLDER  : Variable storing the path to the multi-module-project
 # ARGUMENTS:
 #	NONE
@@ -784,14 +779,14 @@ function test_projects {
 		return
 	fi
 
-	for project in "${projects[@]}"
+	for project in "${!projects[@]}"
 	do
 		project="${project// /}"
 
-		if [[ "$project" != $BASE_PROJECT_NAME && "$status" =~ "${!project/\//}" ]]
+		if [[ "$project" != $BASE_PROJECT_NAME && "$status" =~ "${projects[$project]/\//}" ]]
 		then
 			echo "Checking $project"
-			cd $BASE_PROJECT_FOLDER${!project}
+			cd $BASE_PROJECT_FOLDER${projects[$project]}
 			
 			if [[ `cat build.gradle` =~ "googleJavaFormat" ]]
 			then
@@ -813,8 +808,8 @@ function test_projects {
 #######################################
 # Commits all changes and pushes to gerrit. Builds all the projects with changes and checks for failure.
 # GLOBALS:
-#	projects             : Array with the names of all sub-projects
-#	BASE_PROJECT_FOLDER  : Variable storing the path to the multi-module-project
+#	projects                 : Associative array with the names and path of all sub-projects
+#	BASE_PROJECT_FOLDER      : Variable storing the path to the multi-module-project
 # ARGUMENTS:
 #	[-b|--build]             : Builds the project and pushes to gerrit if build is successful.
 #	[-s|--status]            : Checks if there are any changes that need to be commited and pushed.
@@ -878,11 +873,11 @@ function push_to_gerrit {
 	then
 		built=0
 
-		for project in "${projects[@]}"
+		for project in "${!projects[@]}"
 		do
 			project="${project// /}"
 
-			if [[ "$project" != $BASE_PROJECT_NAME && "$status" =~ ${!project/\//} ]]
+			if [[ "$project" != $BASE_PROJECT_NAME && "$status" =~ ${projects[$project]/\//} ]]
 			then
 				echo "Checking $project"
 				cd $BASE_PROJECT_FOLDER${!project}
@@ -1069,12 +1064,12 @@ function reload_helper {
 #######################################
 # Prints the folder path from base project.
 # GLOBALS:
-#	${!proj}        : Value stored in the variable with name proj  
+#	projects      : Associative array with the names and path of all sub-projects  
 # ARGUMENTS:
-#	proj            : Name of the project. Position Any. Optional.
+#	$1            : Name of the project. Position Any. Optional.
 #######################################
 function show_folder {
-	echo ${!1}
+	echo ${projects[$1]}
 }
 
 #######################################
