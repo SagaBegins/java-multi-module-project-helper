@@ -28,9 +28,9 @@ HELPER_SOURCE=${BASH_SOURCE[0]}
 # Will always be int. When string is assigned value becomes 0
 declare -i vpn info chdir_to_base iap gerrit_visibility open_jacoco
 
-# TODO change to associative array
+# TODO change all functions to work with associative array
 # Declaring array of projects
-declare -a projects
+declare -A projects
 
 vpn=0
 info=1
