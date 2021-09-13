@@ -191,7 +191,7 @@ function export_project_names_from_settings {
 # ARGUMENTS:
 #	full_project_name   : Full project name. Position [1].
 # RETURN:
-#	EXTRACTED_NAME      : Extracted project name is stored in this variable
+#	EXTRACTED_NAME      : Extracted project name
 #######################################
 function extract_name_from_project {
 
@@ -224,7 +224,7 @@ function extract_name_from_project {
 	# 	name="${name}_discovery_worker"
 	# fi
 	
-	$EXTRACTED_NAME=$name
+	EXTRACTED_NAME=$name
 }
 
 #######################################
@@ -234,19 +234,18 @@ function extract_name_from_project {
 # ARGUMENTS:
 #	full_path      : Full path to the project. Position [1]
 # RETURN:
-#	EXTRACTED_NAME : Extracted project name is stored in this variable
+#	EXTRACTED_NAME : Extracted project name
 #######################################
 function extract_name {
 
 	local full_path name project_name
 
 	# # Add conditionals like this if necessary
-	# if [[ "$1" == '' ]]
-	# then
-	# 	export base=''
-	# 	projects+=('base')
-	# 	return
-	# fi
+	if [[ "$1" == '' ]]
+	then
+		projects[base_project]=""
+		return
+	fi
 
 	full_path=$1
 
@@ -272,7 +271,7 @@ function extract_name {
 		done
 	done
 
-	$EXTRACTED_NAME=$name
+	EXTRACTED_NAME=$name
 }
 
 #######################################
@@ -288,6 +287,7 @@ function find_sub_project_folders {
 	local ind folder
 
 	unset projects
+	declare -g -A projects
 
 	old_pwd=$(pwd)
 	cd $BASE_PROJECT_FOLDER
