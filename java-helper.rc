@@ -243,7 +243,7 @@ function extract_name {
 	# # Add conditionals like this if necessary
 	if [[ "$1" == '' ]]
 	then
-		projects[base_project]=""
+		EXTRACTED_NAME="base_project"
 		return
 	fi
 
