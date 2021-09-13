@@ -4,6 +4,10 @@
 
 java-helper makes navigating between, building and running java subprojects easier. Currently supports gradle projects but can be modified to support others.
 
+## Usage of helper.ps1
+
+    powershell -noexit -executionpolicy bypass -File <path to helper.ps1>
+    
 ## Usage
 
     source <path to helper> [options]
