@@ -28,7 +28,6 @@ HELPER_SOURCE=${BASH_SOURCE[0]}
 # Will always be int. When string is assigned value becomes 0
 declare -i vpn info chdir_to_base iap gerrit_visibility open_jacoco
 
-# TODO change all functions to work with associative array
 # Declaring array of projects
 declare -A projects
 
@@ -768,7 +767,7 @@ function toggle_open_jacoco {
 #	NONE
 #######################################
 function test_projects {
-
+	# TODO test function
 	old_pwd=$(pwd)
 	cd $BASE_PROJECT_FOLDER
 	status=$(git status)
@@ -818,7 +817,7 @@ function test_projects {
 #######################################
 function push_to_gerrit {
 	# TODO Move the checking to a separate function.
-	# TODO Add help
+	# TODO test function
 	local built status_check build_check message override_gerrit_visibility
 
 	override_gerrit_visibility=$gerrit_visibility
