@@ -15,6 +15,8 @@ function Select-Project {
 
     Set-Location $global:PROJECT_DIR
 
+    Write-Host "Please wait scanning sub projects. Scanning for the first time after logging in takes a while to load."
+    
     $projectDir = (cmd /c "dir /b /s build.gradle")
 
     foreach($javaDir in $projectDir) {
@@ -45,8 +47,8 @@ function Get-Project-Name {
 
     $splitPath = [String[]] $projectPath.Split("\")
     
-    Write-Host "Extracted Name: "$splitPath[($splitPath.Count-1)]
-    return $splitPath[($splitPath.Count-1)]
+    Write-Host "Extracted Name: $($splitPath[-1])"
+    return $splitPath[-1]
 }
 
 function Set-Project-Location {
