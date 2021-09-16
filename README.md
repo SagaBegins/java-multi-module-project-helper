@@ -8,7 +8,7 @@ helper.ps1 is a powershell script which supports selecting gradle multi-projects
 
 ## Using helper.ps1
 
-    powershell -executionpolicy bypass -File <path to helper.ps1>
+    powershell -noexit -executionpolicy bypass -File <path to helper.ps1>
 
 Commands
 
