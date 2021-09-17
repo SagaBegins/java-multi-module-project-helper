@@ -122,7 +122,7 @@ function config_wizard {
 				value=${!var}
 		fi
 
-		echo "export ${var}=${value}" >> $HOME/.project_config
+		echo "export ${var}='${value}'" >> "$HOME/.project_config"
 	done
 
 	echo ""
@@ -140,7 +140,7 @@ fi
 
 if (( chdir_to_base ))
 then
-	cd $BASE_PROJECT_FOLDER
+	cd "$BASE_PROJECT_FOLDER"
 fi
 
 #######################################
@@ -156,7 +156,7 @@ function export_project_names_from_settings {
 	
 	prev_ifs=$IFS
 	IFS=$'\n'
-	project_names=(`grep '=' $BASE_PROJECT_FOLDER/settings.gradle`)
+	project_names=(`grep '=' "$BASE_PROJECT_FOLDER/settings.gradle"`)
 	IFS=$prev_ifs
 	i=0
 	
@@ -289,20 +289,20 @@ function find_sub_project_folders {
 	declare -g -A projects
 
 	old_pwd=$(pwd)
-	cd $BASE_PROJECT_FOLDER
+	cd "$BASE_PROJECT_FOLDER"
 	ind=0
 	
 	while read -e folder
 	do
 		# Removing base incase it is changed
 		path=${folder/"$BASE_PROJECT_FOLDER"/}
-		path="${path/\/build.gradle/}"
+		path="${path/build.gradle/}"
 		name="$path"
 		
 		extract_name $name
 		projects[$EXTRACTED_NAME]=$path
 
-	done < <(find $BASE_PROJECT_FOLDER -iname build.gradle)
+	done < <(find "$BASE_PROJECT_FOLDER" -iname build.gradle)
 
 	cd $old_pwd
 }
@@ -311,7 +311,7 @@ function find_sub_project_folders {
 find_sub_project_folders
 
 # Some constant commands
-PROJECT_GRADLEW=$BASE_PROJECT_FOLDER/gradlew
+PROJECT_GRADLEW="$BASE_PROJECT_FOLDER/gradlew"
 BOOT_RUN_COMMAND="$BASE_PROJECT_FOLDER/gradlew bootrun"
 BUILD_COMMAND="$BASE_PROJECT_FOLDER/gradlew clean g build"
 GIT_PUSH="git push origin HEAD:refs/for/master"
@@ -382,7 +382,7 @@ function show_jacoco {
 					disown
 					echo ""
 			else
-					$BROWSER $BASE_PROJECT_FOLDER${projects[$proj]}/${JACOCO_PATH} &> /dev/null & 
+					$BROWSER "$BASE_PROJECT_FOLDER${projects[$proj]}/${JACOCO_PATH}" &> /dev/null & 
 					disown
 					echo ""
 			fi
@@ -425,7 +425,7 @@ function show_checkstyle {
 		disown
 		echo ""
 	else
-		$BROWSER $BASE_PROJECT_FOLDER${projects[$proj]}/${CHECKSTYLE_PATH} &> /dev/null & 
+		$BROWSER "$BASE_PROJECT_FOLDER${projects[$proj]}/${CHECKSTYLE_PATH}" &> /dev/null & 
 		disown
 		echo ""
 	fi
@@ -648,7 +648,7 @@ function chdir {
 
 	if [[ "$1" == '' ]]
 	then
-		cd $BASE_PROJECT_FOLDER
+		cd "$BASE_PROJECT_FOLDER"
 	else
 		cd "$BASE_PROJECT_FOLDER${projects[$1]}"
 	fi
@@ -676,8 +676,8 @@ function helper_info {
 	echo "  * ${GREEN}chdir${DEFAULT}, ${GREEN}btrun${DEFAULT}, ${GREEN}bootrun${DEFAULT}, ${GREEN}gbld${DEFAULT}, ${GREEN}bld${DEFAULT} and ${GREEN}gbuild${DEFAULT} take in an argument. Valid arguments are listed in the tab completion. If argument is empty it will run the current directory."
 	echo "  * ${GREEN}clear_with_info${DEFAULT} can be used to clear the shell and print these messages."
 	echo "  * ${GREEN}push_to_gerrit${DEFAULT} ${BLUE}[-b|--build] [-s|--status] ([-m|--message] <commit-msg>)${DEFAULT} can be used to commit and push changes."
-	echo "  * ${GREEN}show_jacoco${DEFAULT} can be used to open jacoco test coverage index.html for the selected project."
-	echo "  * ${GREEN}show_folder${DEFAULT} ${BLUE}<project_name>${DEFAULT} can be used to show the path of <project_name> from base."
+	echo "  * ${GREEN}show_jacoco${DEFAULT} ${BLUE}<project_name>${DEFAULT} can be used to open jacoco test coverage index.html for the selected project."
+	echo "  * ${GREEN}show_folder${DEFAULT} can be used to show the path of <project_name> from base."
 	echo "  * ${GREEN}edit_config${DEFAULT} can be used to open the .project_config file in gedit. Add needed export variables to .project_config."
 	gerrit_branch_visibility
 	open_jacoco_status
@@ -769,7 +769,7 @@ function toggle_open_jacoco {
 function test_projects {
 	# TODO test function
 	old_pwd=$(pwd)
-	cd $BASE_PROJECT_FOLDER
+	cd "$BASE_PROJECT_FOLDER"
 	status=$(git status)
 
 	if [[ "$status" =~ 'nothing to commit' ]]
@@ -785,7 +785,7 @@ function test_projects {
 		if [[ "$project" != $BASE_PROJECT_NAME && "$status" =~ "${projects[$project]/\//}" ]]
 		then
 			echo "Checking $project"
-			cd $BASE_PROJECT_FOLDER${projects[$project]}
+			cd "$BASE_PROJECT_FOLDER${projects[$project]}"
 			
 			if [[ `cat build.gradle` =~ "googleJavaFormat" ]]
 			then
@@ -858,7 +858,7 @@ function push_to_gerrit {
 	done
 
 	old_pwd=$(pwd)
-	cd $BASE_PROJECT_FOLDER
+	cd "$BASE_PROJECT_FOLDER"
 
 	status=$(git status)
 
@@ -879,7 +879,7 @@ function push_to_gerrit {
 			if [[ "$project" != $BASE_PROJECT_NAME && "$status" =~ ${projects[$project]/\//} ]]
 			then
 				echo "Checking $project"
-				cd $BASE_PROJECT_FOLDER${!project}
+				cd "$BASE_PROJECT_FOLDER${!project}"
 
 				((++built))
 
@@ -912,9 +912,9 @@ function push_to_gerrit {
 
 	if [[ $message == '' ]]
 	then
-		cd $BASE_PROJECT_FOLDER && git add -A && git commit --amend --no-edit
+		cd "$BASE_PROJECT_FOLDER" && git add -A && git commit --amend --no-edit
 	else
-		cd $BASE_PROJECT_FOLDER && git add -A && git commit -m $message
+		cd "$BASE_PROJECT_FOLDER" && git add -A && git commit -m $message
 	fi
 
 	if (( $override_gerrit_visibility ))
