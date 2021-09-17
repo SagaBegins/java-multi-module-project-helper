@@ -12,7 +12,8 @@ Function Select-Project {
     $global:PROJECT_DIR = $args[0]
     
     # Making a global alias pgradlew.
-    Set-Alias -Name pgradlew -Value $global:PROJECT_DIR\gradlew -Scope Global
+    # Use gradlew instead of gradlew.bat to run in a seperate cmd prompt window.
+    Set-Alias -Name pgradlew -Value $global:PROJECT_DIR\gradlew.bat -Scope Global
 
     Set-Location $global:PROJECT_DIR
 
@@ -68,12 +69,29 @@ Function Set-Project-Location {
     }
 }
 
-$SetProjectLocationTabCompletion = {
-    param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
-    $projectsTable.Keys | ForEach-Object {if($_ -like "$wordToComplete*") {[System.Management.Automation.CompletionResult]::new($_, $_, "ParameterValue", $_)} }
+Function Build-Project {
+    # Builds the specified project. 
+    # TODO Add function with all gradle tasks for the specified project.
+    param($ProjectName)
+
+    Set-Project-Location $ProjectName
+    try {    
+        pgradlew build
+    } catch {
+        Write-Host -Color Red "Something went wrong."
+    } finally {
+        cd $PreviousDir
+    }
 }
 
-Register-ArgumentCompleter -CommandName Set-Project-Location -ParameterName ProjectName -ScriptBlock $SetProjectLocationTabCompletion
+
+$SubProjectsTabCompletion = {
+    param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
+    $projectsTable.Keys | ForEach-Object {if($_ -like "$wordToComplete*") {$_} }
+}
+
+Register-ArgumentCompleter -CommandName Set-Project-Location -ParameterName ProjectName -ScriptBlock $SubProjectsTabCompletion
+Register-ArgumentCompleter -CommandName Build-Project -ParameterName ProjectName -ScriptBlock $SubProjectsTabCompletion
 
 # To see and navigate between all  available autocomplete options
 Set-PSReadLineKeyHandler -Chord Ctrl+Tab -Function MenuComplete
