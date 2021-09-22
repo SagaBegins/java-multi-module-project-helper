@@ -1,8 +1,8 @@
-# Java Subproject Helper
+# Java multi module project Helper
 
 ## Description
 
-java-helper is a bash script/configuration which makes navigating between, building and running java subprojects easier. Currently supports gradle projects but can be modified to support others. Maven support will be added soon.
+java-helper is a bash script/configuration which makes navigating between, building and running java multi module projects easier. Currently supports gradle projects but can be modified to support others. Maven support will be added soon.
 
 helper.ps1 is a powershell script which supports selecting gradle multi-projects, navigating between the sub-projects under the base multi-project. More features will be added soon.
 
