@@ -6,6 +6,8 @@ java-helper is a bash script/configuration which makes navigating between, build
 
 helper.ps1 is a powershell script which supports selecting gradle multi-projects, navigating between the sub-projects under the base multi-project. More features will be added soon.
 
+Some other helpful shell scripts and a multi-module project to test the java-helper file can be found [here](https://github.com/SagaBegins/demo-mm-java).
+
 ## Using java-helper.rc
 
     source <path to helper> [options]
