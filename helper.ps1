@@ -8,18 +8,22 @@ Function Select-Project {
     # TODO: add flags to get java project type and base directory.
     # Scans for sub-projects present in path obtained from first argument passed to the function and 
     # adds them to a projectsTable. Sets alias of the base project's gradlew to pgradlew. 
+    # set $DebugPreference = Continue, to enable debug outputs.
     $owd = $PWD
     $global:PROJECT_DIR = $args[0]
+    $global:projectsTable = @{}
     
     # Making a global alias pgradlew.
     # Use gradlew instead of gradlew.bat to run in a seperate cmd prompt window.
     Set-Alias -Name pgradlew -Value $global:PROJECT_DIR\gradlew.bat -Scope Global
 
-    Set-Location $global:PROJECT_DIR
+    # Set-Location $global:PROJECT_DIR
 
     Write-Host "Please wait scanning sub projects. Scanning for the first time after logging in takes a while to load."
-    
-    $projectDir = (cmd /c "dir /b /s build.gradle")
+     
+    # $projectDir = (cmd /c "dir /b /s build.gradle")
+    $projectDir = (Get-ChildItem -Path $global:PROJECT_DIR -Filter "build.gradle" -Recurse -Name)
+    # $projectDir = [System.IO.Directory]::EnumerateFiles("$global:PROJECT_DIR", "build.gradle", "AllDirectories")
 
     foreach($javaDir in $projectDir) {
         $projects += @($javaDir.Replace("build.gradle", ""))
@@ -27,30 +31,39 @@ Function Select-Project {
 
     foreach($project in $projects){
         $name = (Get-Project-Name $project)
-        Write-Host "Trying to add "$name ':' $project
+        Write-Debug "Trying to add $name => $project"
         try {
             $projectsTable.add($name, $project)
         }
         catch {
             Write-Host -ForegroundColor Red "Error trying to add duplicate key '$name'."
         }
-        Write-Host ""
     }
     
     Set-Location $owd
 }
 
 Function Get-Project-Name {
-    # TODO: Complete Name extraction
-    # Performs basic name extraction. Currently, only Works properly with sub-projects having distinct folder names.
+    # Performs basic name extraction.
     $projectPath = $args[0]
     $projectPath = $projectPath.ToString().Replace("D:\", "")
     $projectPath = $projectPath.Trim('\')
 
     $splitPath = [String[]] $projectPath.Split("\")
-    
-    Write-Host "Extracted Name: $($splitPath[-1])"
-    return $splitPath[-1]
+    $splitPathLen = $splitPath.length
+    $extractedName = $splitPath[-1]
+    $ind = 2
+    while ($ind -lt $splitPathLen -and $projectsTable.Contains($extractedName)) {
+        $extractedName = $splitPath[-$ind]+"_$extractedName"
+        Write-Debug "Extracted Name: $extractedName"   
+        $ind += 1
+    }
+
+    while ($projectsTable.Contains($extractedName)) {
+        $extractedName = $splitPath[0]+"_$extractedName"
+    }
+
+    return $extractedName
 }
 
 Function Set-Project-Location {
