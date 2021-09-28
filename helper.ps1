@@ -78,7 +78,11 @@ Function Set-Project-Location {
         Set-Location $global:PROJECT_DIR
     }
     else {
-        Set-Location $projectsTable[$ProjectName]
+        if($projectsTable[$ProjectName] -like "$PROJECT_DIR*") {
+            Set-Location $projectsTable[$ProjectName]
+        } else {
+            Set-Location $global:PROJECT_DIR\$($projectsTable[$ProjectName])
+        }
     }
 }
 
@@ -96,7 +100,6 @@ Function Build-Project {
         cd $PreviousDir
     }
 }
-
 
 $SubProjectsTabCompletion = {
     param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
