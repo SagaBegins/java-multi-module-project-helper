@@ -3,6 +3,7 @@
 [String]$PROJECT_DIR = ""
 [String[]]$projects = @()
 [HashTable]$projectsTable = @{}
+[HashTable]$codeFilesTable =@{}
 
 Function Select-Project {
     # TODO: add flags to get java project type and base directory.
@@ -84,6 +85,10 @@ Function Set-Project-Location {
             Set-Location $global:PROJECT_DIR\$($projectsTable[$ProjectName])
         }
     }
+
+    if ($PWD.path != $global:PROJECT_DIR) {
+        Scan-Code
+    }
 }
 
 Function Build-Project {
@@ -101,9 +106,33 @@ Function Build-Project {
     }
 }
 
+Function Open-File {
+    # TODO: Add functionality to open multiple files
+    param($FileName)
+
+    code $codeFilesTable[$FileName]
+}
+
+Function Scan-Code {
+    Get-ChildItem -Path . -Filter "*.java" -Recurse -Name | ` 
+    ForEach-Object {
+        $codeFileName = $_.Replace('.java', '').ToString().Split('\\')[-1]
+        Write-Host $codeFileName
+        Write-Host $_
+        $codeFilesTable[$codeFileName] = $_
+    }
+
+    Register-ArgumentCompleter -CommandName Open-File -ParameterName FileName -ScriptBlock $FilesTabCompletion
+}
+
 $SubProjectsTabCompletion = {
     param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
     $projectsTable.Keys | ForEach-Object {if($_ -like "$wordToComplete*") {$_} }
+}
+
+$FilesTabCompletion = {
+    param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
+    $codeFilesTable.Keys | ForEach-Object {if($_ -like "$wordToComplete*") {$_} }
 }
 
 Register-ArgumentCompleter -CommandName Set-Project-Location -ParameterName ProjectName -ScriptBlock $SubProjectsTabCompletion

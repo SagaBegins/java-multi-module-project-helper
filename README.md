@@ -33,6 +33,7 @@ Some commands which java-helper supports
 - `show_checkstyle [project-name]`: Opens the checkstyle html of the specified project or current directory if nothing is provided.
 - `edit_config`: Opens config in gedit.
 - `edit_helper`: Opens helper in gedit.
+- `open_file <code-file-name>`: Opens the specified code file in visual studio code.
 
 ## Using helper.ps1
 
@@ -45,3 +46,5 @@ Commands
 - `Select-Project <path>`: Scans for gradle sub projects in the specified path.
 - `Get-Project-Name <path>`: Returns project name extracted from the path.
 - `Set-Project-Location [project-name]`: Changes directory to the specified project. If no argument is passed changes directory to base directory of the multi-project.
+- `Open-File <file-name>`: Opens the specified java code file name.
+- `Scan-Code`: Scans the present directory for .java files.

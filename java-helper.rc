@@ -28,8 +28,8 @@ HELPER_SOURCE=${BASH_SOURCE[0]}
 # Will always be int. When string is assigned value becomes 0
 declare -i vpn info chdir_to_base iap gerrit_visibility open_jacoco
 
-# Declaring array of projects
-declare -A projects
+# Declaring array of projects and code_files
+declare -A projects code_files
 
 vpn=0
 info=1
@@ -305,6 +305,55 @@ function find_sub_project_folders {
 	done < <(find "$BASE_PROJECT_FOLDER" -iname build.gradle)
 
 	cd $old_pwd
+}
+
+#######################################
+# Opens code file in visual studio code.
+# GLOBALS:
+#	code_files  : Associative array with the names and path of all code files in the current sub-project
+# ARGUMENTS:
+#	file_name   : Name of the file to open
+#######################################
+function open_code_file {
+	# TODO: Add support for go to line
+	# TODO: add support to use any IDE
+	local file_name files_to_open
+
+	while (( $# ))
+	do
+		case $1 in
+			*)
+				file_name=${1//\.java/}
+				files_to_open+=(${code_files[$file_name]})
+				;;
+		esac
+		shift
+	done
+
+	code "${files_to_open[*]}"
+}
+
+#######################################
+# Scans the current directory and it sub-directories for .java files.
+# GLOBALS:
+#	code_files  : Associative array with the names and path of all code files in the current sub-project
+# ARGUMENTS:
+#	NONE
+#######################################
+function scan_code {
+	local code_file_path code_file_name
+	
+	while read -e code_file_path
+	do
+		code_file_name=${code_file_path//\./}
+		code_file_name=(${code_file_name//\// })
+		code_file_name=${code_file_name[-1]}
+		code_file_name=${code_file_name//\.java/}
+
+	code_files[$code_file_name]=$code_file_path
+	done < <(find . -iname "*.java")
+
+	complete -W "${!code_files[*]}" open_code_file
 }
 
 # finding all the project sub folders with build.gradle
@@ -651,6 +700,11 @@ function chdir {
 		cd "$BASE_PROJECT_FOLDER"
 	else
 		cd "$BASE_PROJECT_FOLDER${projects[$1]}"
+	fi
+
+	if [[ $(pwd) != $BASE_PROJECT_FOLDER ]]
+	then
+		scan_code
 	fi
 }
 
