@@ -43,7 +43,7 @@ Some commands which java-helper supports
 
 Commands
 
-- `Select-Project <path>`: Scans for gradle sub projects in the specified absolute path of the base project.
+- `Select-Project <path>`: Scans for gradle sub projects in the specified absolute path to the base project.
 - `Get-Project-Name <path>`: Returns project name extracted from the path.
 - `Set-Project-Location [project-name]`: Changes directory to the specified project. If no argument is passed changes directory to base directory of the multi-project.
 - `Open-Files <first-file-name>, [second-file-name, ...]`: Opens the specified java code file name.
