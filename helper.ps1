@@ -86,7 +86,7 @@ Function Set-Project-Location {
         }
     }
 
-    if ($PWD.path != $global:PROJECT_DIR) {
+    if ($PWD.path -ne $global:PROJECT_DIR) {
         Scan-Code
     }
 }
@@ -106,9 +106,9 @@ Function Build-Project {
     }
 }
 
-Function Open-File {
-    # TODO: Add functionality to open multiple files
-    param($FileName)
+Function Open-Files {
+    # TODO: Add support for different ide
+    param([String[]]$FileName)
 
     code $codeFilesTable[$FileName]
 }
@@ -122,7 +122,7 @@ Function Scan-Code {
         $codeFilesTable[$codeFileName] = $_
     }
 
-    Register-ArgumentCompleter -CommandName Open-File -ParameterName FileName -ScriptBlock $FilesTabCompletion
+    Register-ArgumentCompleter -CommandName Open-Files -ParameterName FileName -ScriptBlock $FilesTabCompletion
 }
 
 $SubProjectsTabCompletion = {

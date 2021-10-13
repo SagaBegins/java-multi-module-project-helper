@@ -105,7 +105,7 @@ function config_wizard {
 
 	# For getting env input on first run
 	# Add or remove variables to customize config wizard
-	vars=(BASE_PROJECT_FOLDER VPN_CONFIG_FOLDER BASE_PROJECT_NAME VPN_FILE_NAME JACOCO_PATH CHECKSTYLE_PATH PUSH_MESSAGE_VALIDATION)
+	vars=(BASE_PROJECT_FOLDER VPN_CONFIG_FOLDER BASE_PROJECT_NAME VPN_FILE_NAME JACOCO_PATH CHECKSTYLE_PATH PUSH_MESSAGE_VALIDATION IDE)
 	BASE_PROJECT_FOLDER="$HOME/Desktop/project"
 	VPN_CONFIG_FOLDER="$HOME/.openvpn/Dev-VPN"
 	BASE_PROJECT_NAME="base"
@@ -113,6 +113,7 @@ function config_wizard {
 	JACOCO_PATH="build/jacocoHtml/index.html"
 	CHECKSTYLE_PATH="build/reports/checkstyle/test.html"
 	PUSH_MESSAGE_VALIDATION="Task #[0-9]{5,}"
+	IDE="code"
 
 	for var in "${vars[@]}"
 	do
@@ -316,12 +317,26 @@ function find_sub_project_folders {
 #######################################
 function open_code_file {
 	# TODO: Add support for go to line
-	# TODO: add support to use any IDE
-	local file_name files_to_open
+	# TODO: Add support for other languages
+	local file_name files_to_open line_num
 
 	while (( $# ))
 	do
 		case $1 in
+			-l|--line-number)
+				line_num=$2
+				file_name=${//\.java/}
+
+				if [[ $IDE == 'code' ]]
+				then
+					code -g "${code_files[$file_name]}:$file_num"
+				elif [[ $IDE =~ intellij.* ]]
+				then
+					files_to_open+=("--line-number" "$line_num" "$file_name")
+				fi
+				
+				shift 2
+				;;
 			*)
 				file_name=${1//\.java/}
 				files_to_open+=(${code_files[$file_name]})
@@ -330,7 +345,7 @@ function open_code_file {
 		shift
 	done
 
-	code "${files_to_open[*]}"
+	$IDE "${files_to_open[*]}"
 }
 
 #######################################
@@ -341,8 +356,9 @@ function open_code_file {
 #	NONE
 #######################################
 function scan_code {
-	local code_file_path code_file_name
-	
+	# TODO: Add support for other languages
+	local code_file_path code_file_name lang
+
 	while read -e code_file_path
 	do
 		code_file_name=${code_file_path//\./}
