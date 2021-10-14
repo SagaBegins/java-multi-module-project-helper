@@ -323,7 +323,7 @@ function open_code_file {
 	while (( $# ))
 	do
 		case $1 in
-			-l|--line-number)
+			-l|--line)
 				line_num=$2
 				file_name=${//\.java/}
 
@@ -332,7 +332,7 @@ function open_code_file {
 					code -g "${code_files[$file_name]}:$file_num"
 				elif [[ $IDE =~ intellij.* ]]
 				then
-					files_to_open+=("--line-number" "$line_num" "$file_name")
+					files_to_open+=("--line" "$line_num" "${code_files[$file_name]}")
 				fi
 				
 				shift 2
