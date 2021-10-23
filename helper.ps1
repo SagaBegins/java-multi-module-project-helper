@@ -1,9 +1,15 @@
 ﻿# TODO: Rename variables
 [String]$PreviousDir = $PWD
+[String]$CurrentSubProject = ""
 [String]$PROJECT_DIR = ""
-[String[]]$projects = @()
 [HashTable]$projectsTable = @{}
 [HashTable]$codeFilesTable =@{}
+[HashTable]$projectCodeTable = @{}
+
+enum ProgramLanguage {
+    Java
+    Kotlin
+}
 
 Function Select-Project {
     # TODO: add flags to get java project type and base directory.
@@ -13,6 +19,7 @@ Function Select-Project {
     $owd = $PWD
     $global:PROJECT_DIR = $args[0]
     $global:projectsTable = @{}
+    $projects = @()
     
     # Making a global alias pgradlew.
     # Use gradlew instead of gradlew.bat to run in a seperate cmd prompt window.
@@ -21,7 +28,7 @@ Function Select-Project {
     # Set-Location $global:PROJECT_DIR
 
     Write-Host "Please wait scanning sub projects. Scanning for the first time after logging in takes a while to load."
-     
+    
     # $projectDir = (cmd /c "dir /b /s build.gradle")
     $projectDir = (Get-ChildItem -Path $global:PROJECT_DIR -Filter "build.gradle" -Recurse -Name)
     # $projectDir = [System.IO.Directory]::EnumerateFiles("$global:PROJECT_DIR", "build.gradle", "AllDirectories")
@@ -31,7 +38,7 @@ Function Select-Project {
     }
 
     foreach($project in $projects){
-        $name = (Get-Project-Name $project)
+        $name = (Get-ProjectName $project)
         Write-Debug "Trying to add $name => $project"
         try {
             $projectsTable.add($name, $project)
@@ -44,7 +51,7 @@ Function Select-Project {
     Set-Location $owd
 }
 
-Function Get-Project-Name {
+Function Get-ProjectName {
     # Performs basic name extraction.
     $projectPath = $args[0]
     $projectPath = $projectPath.ToString().Replace("D:\", "")
@@ -63,6 +70,10 @@ Function Get-Project-Name {
     while ($projectsTable.Contains($extractedName)) {
         $extractedName = $splitPath[0]+"_$extractedName"
     }
+    
+    if ($extractedName -eq "") {
+        return "BaseProject"
+    }
 
     return $extractedName
 }
@@ -72,14 +83,15 @@ Function Set-Project-Location {
 
     # To easily navigate back if previous dir is non-project directory
     $global:PreviousDir = $PWD
-    
+    $global:CurrentSubProject = $ProjectName
+
     # Changes to the specified project. 
     # If no argument is provided changes to PROJECT_DIR
     if (!$ProjectName -or $ProjectName.Equals("")){
         Set-Location $global:PROJECT_DIR
     }
     else {
-        if($projectsTable[$ProjectName] -like "$PROJECT_DIR*") {
+        if($projectsTable[$ProjectName] -like "$global:PROJECT_DIR*") {
             Set-Location $projectsTable[$ProjectName]
         } else {
             Set-Location $global:PROJECT_DIR\$($projectsTable[$ProjectName])
@@ -107,36 +119,60 @@ Function Build-Project {
 }
 
 Function Open-Files {
-    # TODO: Add support for different ide
-    param([String[]]$FileName)
+    # TODO: Add support for different ide's.
+    # Add support to get project name
+    # Add support to go to line in the specified file.
+    param([String[]]$FileName,
+          [String[]]$ProjectName)
 
     code $codeFilesTable[$FileName]
 }
 
 Function Scan-Code {
-    Get-ChildItem -Path . -Filter "*.java" -Recurse -Name | ` 
-    ForEach-Object {
-        $codeFileName = $_.Replace('.java', '').ToString().Split('\\')[-1]
-        Write-Host $codeFileName
-        Write-Host $_
-        $codeFilesTable[$codeFileName] = $_
+    # TODO: Add support to load multiple languages
+    param([ProgramLanguage]$Language)
+
+    $global:codeFilesTable = @{}
+
+    switch($Language) {
+        Java { $extension = '.java' }
+        Kotlin { $extension = '.kt' }
+        Default { $extension = '.java' }
     }
+
+    Get-ChildItem -Path . -Filter "*$extension" -Recurse -Name | `
+        ForEach-Object {
+            $codeFileName = $_.Replace($extension, '').ToString().Split('\\')[-1]
+            # Write-Host $codeFileName
+            # Write-Host $_
+            $global:codeFilesTable[$codeFileName] = $_
+        }
 
     Register-ArgumentCompleter -CommandName Open-Files -ParameterName FileName -ScriptBlock $FilesTabCompletion
 }
 
 $SubProjectsTabCompletion = {
-    param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
+    param($commandName, $parameterName, $wordToComplete)
     $projectsTable.Keys | ForEach-Object {if($_ -like "$wordToComplete*") {$_} }
 }
 
 $FilesTabCompletion = {
+    # TODO: Add table to store each project's code files
     param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
+    if ($fakeBoundParameters.ProjectName -eq "") {
+        $ProjectName = $global:CurrentSubProject
+    } else {
+        $ProjectName = $fakeBoundParameters.ProjectName
+    }
+    # echo $ProjectName
     $codeFilesTable.Keys | ForEach-Object {if($_ -like "$wordToComplete*") {$_} }
 }
 
-Register-ArgumentCompleter -CommandName Set-Project-Location -ParameterName ProjectName -ScriptBlock $SubProjectsTabCompletion
-Register-ArgumentCompleter -CommandName Build-Project -ParameterName ProjectName -ScriptBlock $SubProjectsTabCompletion
+# Adding sub-project tab completion
+Register-ArgumentCompleter `
+-CommandName Set-Project-Location, Build-Project, Open-Files `
+-ParameterName ProjectName `
+-ScriptBlock $SubProjectsTabCompletion
 
-# To see and navigate between all  available autocomplete options
+# To see and navigate between all available autocomplete words
 Set-PSReadLineKeyHandler -Chord Ctrl+Tab -Function MenuComplete
