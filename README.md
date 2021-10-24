@@ -34,6 +34,7 @@ Some commands which java-helper supports
 - `edit_config`: Opens config in gedit.
 - `edit_helper`: Opens helper in gedit.
 - `open_file <code-file-names>`: Opens the specified code file in visual studio code.
+- `scan_code [Kotlin|Java]` : Scans for codes files of specified language. Scans for java files by default.
 
 ## Using helper.ps1
 
@@ -46,5 +47,5 @@ Commands
 - `Select-Project <path>`: Scans for gradle sub projects in the specified absolute path to the base project.
 - `Get-ProjectName <path>`: Returns project name extracted from the path.
 - `Set-Project-Location [project-name]`: Changes directory to the specified project. If no argument is passed changes directory to base directory of the multi-project.
-- `Open-Files <first-file-name>[, second-file-name, ...]`: Opens the specified code file name.
-- `Scan-Code [-Language <Java|Kotlin>]`: Scans the present directory for specified code files.
+- `Open-Files <first-file-name>[, second-file-name[, ...]]`: Opens the specified code file name.
+- `Scan-Code [-Language <Java|Kotlin>]`: Scans the present directory for code files of specified language.
