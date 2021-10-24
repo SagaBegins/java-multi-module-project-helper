@@ -313,7 +313,7 @@ function find_sub_project_folders {
 # GLOBALS:
 #	code_files  : Associative array with the names and path of all code files in the current sub-project
 # ARGUMENTS:
-#	file_name   : Name of the file to open
+#	file_name   : Name/Names of the file to open.
 #######################################
 function open_code_file {
 	# TODO: Add support for go to line
@@ -325,7 +325,7 @@ function open_code_file {
 		case $1 in
 			-l|--line)
 				line_num=$2
-				file_name=${//\.java/}
+				file_name=${3//\.java/}
 
 				if [[ $IDE == 'code' ]]
 				then
@@ -349,25 +349,37 @@ function open_code_file {
 }
 
 #######################################
-# Scans the current directory and it sub-directories for .java files.
+# Scans the current directory and it sub-directories for code files of specified lang.
 # GLOBALS:
 #	code_files  : Associative array with the names and path of all code files in the current sub-project
 # ARGUMENTS:
-#	NONE
+#	$1			: Language to scan. Position 1. Optional. Default java.
 #######################################
 function scan_code {
-	# TODO: Add support for other languages
-	local code_file_path code_file_name lang
+	# TODO: Add support to scan multiple languages
+	local code_file_path code_file_name lang_ext
+
+	case $1 in 
+		[Jj]ava)
+			lang_ext=".java"
+			;;
+		[Kk]otlin)
+			lang_ext=".kt"
+			;;
+		*)
+			lang_ext=".java"
+			;;
+	esac
 
 	while read -e code_file_path
 	do
 		code_file_name=${code_file_path//\./}
 		code_file_name=(${code_file_name//\// })
 		code_file_name=${code_file_name[-1]}
-		code_file_name=${code_file_name//\.java/}
+		code_file_name=${code_file_name//$lang_ext/}
 
 	code_files[$code_file_name]=$code_file_path
-	done < <(find . -iname "*.java")
+	done < <(find . -iname "*$lang_ext")
 
 	complete -W "${!code_files[*]}" open_code_file
 }
@@ -399,7 +411,7 @@ alias reconnect_vpn=reload_vpn
 complete -W "${!projects[*]} -t --new-tab" bootrun btrun show_folder
 complete -W "${!projects[*]} -t --new-tab -o --open-jacoco -n --no-jacoco" gbld gbuild bld build
 complete -W "-m --message -b --build -s --status" push_to_gerrit
-complete -W "${!projects[*]}" trigger_pubsub show_checkstyle pcd show_jacoco
+complete -W "${!projects[*]}" show_checkstyle pcd show_jacoco
 complete -W "${go_projects[*]} ${!projects[*]}" chdir
 #--------------------------------------------
 
